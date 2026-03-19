@@ -8,8 +8,6 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<OrderPlacedEventConsumer>();
     x.UsingRabbitMq((context, cfg) =>
     {
-        var isDocker = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
-        //var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? (isDocker ? "rabbitmq" : "localhost");
         var rabbitHost = builder.Configuration["RabbitMQ:Host"] ?? Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
         cfg.Host(rabbitHost, h => {h.Username("guest"); h.Password("guest");});
         cfg.Message<OrderPlacedEvent>(x => x.SetEntityName("OrderPlacedEvent"));
