@@ -1,0 +1,12 @@
+﻿apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-config
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  RABBITMQ_HOST: "rabbitmq-service"
+  ORDER_PLACED_QUEUE: "order-placed-queue"
+  ORDER_PLACED_ENTITY_NAME: "OrderPlacedEvent"
+  PAYMENT_PROCESSED_ENTITY_NAME: "PaymentProcessedEvent"
+  JWT_ISSUER: "CloudGames.Payments"
+  JWT_AUDIENCE: "CloudGames.Payments.Client"

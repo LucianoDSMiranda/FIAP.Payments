@@ -20,22 +20,15 @@ public class OrderPlacedEventConsumer : IConsumer<OrderPlacedEvent>
 
         var isApproved = Random.Shared.Next(2) == 0;
         var status = isApproved ? PaymentStatus.Approved : PaymentStatus.Rejected;
-
-        await _publishEndpoint.Publish(new PurchaseCreatedIntegrationEvent
-        {
-            UserId = message.UserId,
-            GameId = message.GameId,
-            Price = message.Price,
-            Status = status,
-            Email = message.Email
-        });
+      
 
         await _publishEndpoint.Publish(new PaymentProcessedEvent
         {
             UserId = message.UserId,
             GameId = message.GameId,
             Price = message.Price,
-            Status = status
+            Status = status,
+            Email = message.Email
         });
 
         Console.WriteLine($"Payment processed for User {message.UserId}, Game {message.GameId}, Status: {status}");

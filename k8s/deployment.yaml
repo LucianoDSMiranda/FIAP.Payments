@@ -1,0 +1,68 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-api
+  template:
+    metadata:
+      labels:
+        app: payments-api
+    spec:
+      containers:
+        - name: payments-api
+          image: fiapmicroservicos-payments-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: ASPNETCORE_ENVIRONMENT
+
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: RABBITMQ_HOST
+
+            - name: ORDER_PLACED_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: ORDER_PLACED_QUEUE
+
+            - name: ORDER_PLACED_ENTITY_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: ORDER_PLACED_ENTITY_NAME
+
+            - name: PAYMENT_PROCESSED_ENTITY_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: PAYMENT_PROCESSED_ENTITY_NAME
+
+            - name: JWT_ISSUER
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: JWT_ISSUER
+
+            - name: JWT_AUDIENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: JWT_AUDIENCE
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: payments-secret
+                  key: JWT_SECRET
