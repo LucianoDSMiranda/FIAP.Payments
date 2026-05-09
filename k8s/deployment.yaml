@@ -61,6 +61,18 @@ spec:
                   name: payments-config
                   key: JWT_AUDIENCE
 
+            - name: Redis__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: Redis__ConnectionString
+
+            - name: Redis__LogStream
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-config
+                  key: Redis__LogStream
+
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

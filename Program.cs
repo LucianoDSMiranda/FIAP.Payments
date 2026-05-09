@@ -1,45 +1,62 @@
 using FIAP.Messages;
 using FIAP.Payments.Consumers;
+using FIAP.Payments.Logging;
 using MassTransit;
+using Prometheus;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
-
-Console.WriteLine("PROGRAM NOVA DO PAYMENTS");
-Console.WriteLine($"RABBITMQ_HOST={Environment.GetEnvironmentVariable("RABBITMQ_HOST")}");
-
-var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq-service";
-
-var orderPlacedQueue = Environment.GetEnvironmentVariable("ORDER_PLACED_QUEUE") ?? "order-placed-queue";
-
-var orderPlacedEntityName = Environment.GetEnvironmentVariable("ORDER_PLACED_ENTITY_NAME") ?? "order-placed-queue";
-
-var paymentProcessedEntityName = Environment.GetEnvironmentVariable("PAYMENT_PROCESSED_ENTITY_NAME") ?? "PaymentProcessedEvent";
-
-builder.Services.AddMassTransit(x =>
+try
 {
-    x.AddConsumer<OrderPlacedEventConsumer>();
+    var builder = WebApplication.CreateBuilder(args);
 
-    x.UsingRabbitMq((context, cfg) =>
+    builder.Host.UseCloudGamesLogging("payments-api");
+
+    var rabbitHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "rabbitmq-service";
+    var orderPlacedQueue = Environment.GetEnvironmentVariable("ORDER_PLACED_QUEUE") ?? "order-placed-queue";
+    var orderPlacedEntityName = Environment.GetEnvironmentVariable("ORDER_PLACED_ENTITY_NAME") ?? "order-placed-queue";
+    var paymentProcessedEntityName = Environment.GetEnvironmentVariable("PAYMENT_PROCESSED_ENTITY_NAME") ?? "PaymentProcessedEvent";
+
+    Log.Information("Starting FIAP.Payments API...");
+    Log.Information("RabbitMQ Host: {RabbitHost}", rabbitHost);
+
+    builder.Services.AddMassTransit(x =>
     {
-        cfg.Host(rabbitHost, "/", h =>
-        {
-            h.Username("guest");
-            h.Password("guest");
-        });
+        x.AddConsumer<OrderPlacedEventConsumer>();
 
-        cfg.Message<OrderPlacedEvent>(x => x.SetEntityName(orderPlacedEntityName));
-        cfg.Message<PaymentProcessedEvent>(x => x.SetEntityName(paymentProcessedEntityName));
-
-        cfg.ReceiveEndpoint(orderPlacedQueue, e =>
+        x.UsingRabbitMq((context, cfg) =>
         {
-            e.ConfigureConsumer<OrderPlacedEventConsumer>(context);
+            cfg.Host(rabbitHost, "/", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+
+            cfg.Message<OrderPlacedEvent>(x => x.SetEntityName(orderPlacedEntityName));
+            cfg.Message<PaymentProcessedEvent>(x => x.SetEntityName(paymentProcessedEntityName));
+
+            cfg.ReceiveEndpoint(orderPlacedQueue, e =>
+            {
+                e.ConfigureConsumer<OrderPlacedEventConsumer>(context);
+            });
         });
     });
-});
 
-var app = builder.Build();
+    var app = builder.Build();
 
-app.MapGet("/", () => "FIAP.Payments API running...");
-app.MapHealthChecks("/health");
+    app.UseHttpMetrics();
 
-app.Run();
+    app.MapGet("/", () => "FIAP.Payments API running...");
+    app.MapHealthChecks("/health");
+    app.MapMetrics();
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application stopped because of exception");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
