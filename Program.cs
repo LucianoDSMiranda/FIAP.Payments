@@ -16,6 +16,11 @@ try
     var orderPlacedEntityName = Environment.GetEnvironmentVariable("ORDER_PLACED_ENTITY_NAME") ?? "order-placed-queue";
     var paymentProcessedEntityName = Environment.GetEnvironmentVariable("PAYMENT_PROCESSED_ENTITY_NAME") ?? "PaymentProcessedEvent";
 
+    var rabbitUsername = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME")
+                         ?? throw new InvalidOperationException("RABBITMQ_USERNAME não configurado.");
+    var rabbitPassword = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD")
+                         ?? throw new InvalidOperationException("RABBITMQ_PASSWORD não configurado.");
+
     Log.Information("Starting FIAP.Payments API...");
     Log.Information("RabbitMQ Host: {RabbitHost}", rabbitHost);
 
@@ -27,8 +32,8 @@ try
         {
             cfg.Host(rabbitHost, "/", h =>
             {
-                h.Username("guest");
-                h.Password("guest");
+                h.Username(rabbitUsername);
+                h.Password(rabbitPassword);
             });
 
             cfg.Message<OrderPlacedEvent>(x => x.SetEntityName(orderPlacedEntityName));
